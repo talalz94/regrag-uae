@@ -110,10 +110,13 @@ def _index_note(rows: list[dict]) -> str:
     for r in rows:
         if r["system"].startswith("hybrid"):
             continue
+        seconds = r["index_seconds"]
         if r["index_from_cache"]:
             parts.append(f"{r['label']}: loaded from cache")
+        elif seconds >= 120:
+            parts.append(f"{r['label']}: {seconds / 60:.1f} min")
         else:
-            parts.append(f"{r['label']}: {r['index_seconds']:.1f} s")
+            parts.append(f"{r['label']}: {seconds:.1f} s")
     return "Index build time on the same machine: " + "; ".join(parts) + "."
 
 
@@ -142,8 +145,8 @@ def render(results: dict[tuple[str, str], dict]) -> str:
         env = sample["environment"]
         timed = [results[("test", s)] for s in MAIN_SYSTEMS + ABLATIONS if ("test", s) in results]
         out += [
-            f"Measured on {env['cpu']} ({env['logical_cpus']} logical CPUs, no GPU), "
-            f"Python {env['python']}, {sample['created_utc'][:10]}. "
+            f"Measured on {env['cpu']} ({env['logical_cpus']} logical CPUs, CPU only), "
+            f"Python {env['python']}, {sample['created_utc'][:10]} UTC. "
             "Latency is one query at a time inside the retriever (query encoding, search "
             "and fusion), after 3 warmup queries. " + _index_note(timed),
             "",

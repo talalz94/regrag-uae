@@ -51,3 +51,8 @@ def test_download_needs_consent_when_not_interactive(tmp_path, monkeypatch, caps
 def test_missing_data_is_a_clean_error(tmp_path, capsys):
     assert main(["--data-dir", str(tmp_path), "eval", "--system", "bm25"]) == 1
     assert "regrag download" in capsys.readouterr().err
+
+
+def test_stats_prints_json(data_dir, capsys):
+    assert main(["--data-dir", str(data_dir), "stats"]) == 0
+    assert json.loads(capsys.readouterr().out)["passages_used"] == 12

@@ -1,0 +1,66 @@
+{
+  "system": "bm25",
+  "label": "BM25",
+  "description": "bm25s, Lucene scoring (k1=1.5, b=0.75), English stopwords, Snowball stemming",
+  "split": "dev",
+  "n_questions": 2788,
+  "n_passages": 13012,
+  "metrics": {
+    "recall@1": 0.5263091822094691,
+    "recall@5": 0.7153754184600669,
+    "recall@10": 0.7671329507412722,
+    "recall@20": 0.8101028216164514,
+    "recall@100": 0.8823708751793401,
+    "map@10": 0.6154798935156718,
+    "mrr@10": 0.6911085775773724,
+    "ndcg@10": 0.6705632969213139
+  },
+  "slices_by_gold_passages": {
+    "1": {
+      "n": 2115.0,
+      "recall@10": 0.8534278959810875,
+      "ndcg@10": 0.731946445312989
+    },
+    "2": {
+      "n": 514.0,
+      "recall@10": 0.5359922178988327,
+      "ndcg@10": 0.5057409973927989
+    },
+    "3+": {
+      "n": 159.0,
+      "recall@10": 0.3664570230607966,
+      "ndcg@10": 0.3868733793695148
+    }
+  },
+  "latency_ms": {
+    "p50": 1.05189997702837,
+    "p95": 2.3428399930708133,
+    "mean": 1.2863119084547023
+  },
+  "index_seconds": 3.091976600000635,
+  "index_from_cache": false,
+  "api_cost_usd_per_1k_queries": 0.0,
+  "command": "uv run regrag eval --system bm25 --split dev",
+  "model": null,
+  "dataset": {
+    "repo": "RegNLP/ObliQADataset",
+    "commit": "c1b2c3c04aee1f6ce75f76106ce13af672d48e02"
+  },
+  "environment": {
+    "python": "3.12.10",
+    "os": "Windows-10-10.0.19045-SP0",
+    "cpu": "Intel(R) Core(TM) i7-10510U CPU @ 1.80GHz",
+    "logical_cpus": 8,
+    "torch_threads": null,
+    "packages": {
+      "bm25s": "0.3.16",
+      "PyStemmer": "3.1.0",
+      "numpy": "2.5.4",
+      "sentence-transformers": "6.2.0",
+      "transformers": "5.22.2",
+      "torch": "2.15.0+cpu"
+    }
+  },
+  "regrag_version": "0.1.0",
+  "created_utc": "2026-11-09T20:06:57+00:00"
+}

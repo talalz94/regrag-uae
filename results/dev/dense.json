@@ -1,0 +1,70 @@
+{
+  "system": "dense",
+  "label": "Dense, bge-small-en-v1.5",
+  "description": "BAAI/bge-small-en-v1.5 (33M parameters), exact cosine search over all passages",
+  "split": "dev",
+  "n_questions": 2788,
+  "n_passages": 13012,
+  "metrics": {
+    "recall@1": 0.4336681013868962,
+    "recall@5": 0.6402797704447633,
+    "recall@10": 0.7032520325203252,
+    "recall@20": 0.7555535628885701,
+    "recall@100": 0.8475011956001912,
+    "map@10": 0.5269708970986768,
+    "mrr@10": 0.5833840040081073,
+    "ndcg@10": 0.5839782494390503
+  },
+  "slices_by_gold_passages": {
+    "1": {
+      "n": 2115.0,
+      "recall@10": 0.7914893617021277,
+      "ndcg@10": 0.6509295892445968
+    },
+    "2": {
+      "n": 514.0,
+      "recall@10": 0.4591439688715953,
+      "ndcg@10": 0.39294782969376574
+    },
+    "3+": {
+      "n": 159.0,
+      "recall@10": 0.3186582809224318,
+      "ndcg@10": 0.31094398566763737
+    }
+  },
+  "latency_ms": {
+    "p50": 55.37014998844825,
+    "p95": 118.58514998166358,
+    "mean": 65.22196040157155
+  },
+  "index_seconds": 1038.5929178000079,
+  "index_from_cache": false,
+  "api_cost_usd_per_1k_queries": 0.0,
+  "command": "uv run regrag eval --system dense --split dev",
+  "model": {
+    "name": "BAAI/bge-small-en-v1.5",
+    "revision": "5c38ec7c405ec4b44b94cc5a9bb96e735b38267a",
+    "license": "MIT"
+  },
+  "dataset": {
+    "repo": "RegNLP/ObliQADataset",
+    "commit": "c1b2c3c04aee1f6ce75f76106ce13af672d48e02"
+  },
+  "environment": {
+    "python": "3.12.10",
+    "os": "Windows-10-10.0.19045-SP0",
+    "cpu": "Intel(R) Core(TM) i7-10510U CPU @ 1.80GHz",
+    "logical_cpus": 8,
+    "torch_threads": 4,
+    "packages": {
+      "bm25s": "0.3.16",
+      "PyStemmer": "3.1.0",
+      "numpy": "2.5.4",
+      "sentence-transformers": "6.2.0",
+      "transformers": "5.22.2",
+      "torch": "2.15.0+cpu"
+    }
+  },
+  "regrag_version": "0.1.0",
+  "created_utc": "2026-11-09T20:28:18+00:00"
+}

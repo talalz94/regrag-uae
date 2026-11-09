@@ -24,6 +24,8 @@ Cite the paper if you use the data. For anything beyond research, contact the au
 
 ## Composition
 
+Counts in this section come from `uv run regrag stats`. Figures about how the data was built are quoted from the authors.
+
 | Part | Count |
 |---|---:|
 | Regulatory documents | 40 (about 640,000 words) |
@@ -41,7 +43,7 @@ Gold passages per question:
 | Dev | 2,115 | 514 | 116 | 30 | 12 | 1 |
 | Test | 2,126 | 506 | 105 | 36 | 9 | 4 |
 
-In the test split, 221 questions have gold passages in more than one document. The median question has 27 words. The median passage has 40 words, the 95th percentile 159, and the longest (a definitions table) 24,312.
+In the test split, 221 questions have gold passages in more than one document and 354 cite a rule by its number. The median question has 27 words. The median passage has 42 words, the 95th percentile 163, and the longest (a definitions table) 24,312.
 
 ## How the authors built it
 
@@ -56,8 +58,8 @@ From the dataset README and paper:
 
 - **Download:** 43 files from the pinned commit (3 question files and 40 documents). Each file's SHA-256 is checked against `src/regrag/_checksums.py`.
 - **Corpus:** every non empty passage. None of the 720 empty passages is a gold passage.
-- **Gold mapping:** questions point at passages by document number and rule reference. That pair is unique except for 17 references shared by 44 passages; those ties are broken by exact passage text. Every gold reference in all three splits maps to exactly one corpus passage.
-- **Question ids:** in the train file, 3 question ids appear more than once (4 extra rows); the loader keeps the first row for each id. Dev and test have no repeats.
+- **Gold mapping:** questions point at passages by document number and rule reference. That pair is unique except for 15 references shared by 39 passages; those ties are broken by exact passage text. Every gold reference in all three splits maps to exactly one corpus passage.
+- **Question ids:** the train file has 22,295 rows but 22,291 unique question ids; the loader keeps the first row for each id. Dev and test have no repeats.
 
 ## Known quirks
 

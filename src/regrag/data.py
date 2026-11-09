@@ -1,6 +1,6 @@
 """Download and load the ObliQA benchmark.
 
-ObliQA has no license file, so this repo never re-hosts it. `regrag download`
+ObliQA has no license file, so this repo never hosts a copy. `regrag download`
 fetches the files from the authors' GitHub repo at a pinned commit, checks the
 SHA-256 of every file and keeps them in the local data directory, which git ignores.
 """
@@ -34,7 +34,7 @@ Paper:   Gokhan et al., "RIRAG: Regulatory Information Retrieval and Answer
          Generation", arXiv:2409.05677
 Content: questions generated with GPT-4 from 40 ADGM regulatory documents.
 
-The dataset has no license file. This project does not re-host it. The files
+The dataset has no license file. This project does not host a copy. The files
 are downloaded from the source repo to your machine for research use only.
 Cite the paper if you use them, and contact the authors for any other use.
 """
@@ -72,11 +72,6 @@ def default_data_dir() -> Path:
 
 def obliqa_dir(data_dir: Path | None = None) -> Path:
     return (data_dir or default_data_dir()) / "obliqa"
-
-
-def dataset_files(include_train: bool = True) -> list[str]:
-    """Paths of the ObliQA files, relative to the repo root at the pinned commit."""
-    return [name for name in CHECKSUMS if include_train or name != "ObliQA_train.json"]
 
 
 def sha256_bytes(data: bytes) -> str:
@@ -172,7 +167,7 @@ def _resolve_gold(index: Mapping[tuple[int, str], list[Passage]], ref: Mapping) 
     """Map a question's gold passage to a corpus pid.
 
     Questions point at passages by (DocumentID, PassageID). That pair is unique for
-    all but 17 keys in the corpus, so ties are broken by exact passage text.
+    all but 15 keys in the corpus, so ties are broken by exact passage text.
     """
     key = (int(ref["DocumentID"]), str(ref["PassageID"]))
     candidates = index.get(key, [])

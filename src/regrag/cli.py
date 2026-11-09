@@ -5,11 +5,13 @@ regrag eval --system NAME    score one system on one split and save the result
 regrag reproduce             run every system on dev and test, then rewrite the README table
 regrag report                rewrite the README table from saved results
 regrag search "question"     print the top passages for a question
+regrag stats                 print the dataset statistics behind docs/DATA_CARD.md
 """
 
 from __future__ import annotations
 
 import argparse
+import json
 import sys
 import textwrap
 from collections.abc import Sequence
@@ -25,6 +27,7 @@ from regrag.data import (
 )
 from regrag.evaluate import EvalResult, evaluate, write_trec_run
 from regrag.report import load_results, render, save_result, update_readme
+from regrag.stats import dataset_stats
 from regrag.systems import DEFAULT_REPRODUCE, SPECS, Systems
 
 
@@ -149,6 +152,11 @@ def cmd_search(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_stats(args: argparse.Namespace) -> int:
+    print(json.dumps(dataset_stats(_data_dir(args)), indent=2))
+    return 0
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="regrag", description="Measured retrieval over ADGM rules (ObliQA)."
@@ -198,9 +206,17 @@ def build_parser() -> argparse.ArgumentParser:
 
     p = sub.add_parser("search", help="print the top passages for a question")
     p.add_argument("query")
-    p.add_argument("--system", choices=list(SPECS), default="hybrid")
+    p.add_argument(
+        "--system",
+        choices=list(SPECS),
+        default="bm25",
+        help="default: bm25, the best and fastest system in the results table",
+    )
     p.add_argument("-k", type=int, default=5)
     p.set_defaults(func=cmd_search)
+
+    p = sub.add_parser("stats", help="print the dataset statistics behind the data card")
+    p.set_defaults(func=cmd_stats)
     return parser
 
 

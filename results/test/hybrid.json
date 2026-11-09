@@ -1,0 +1,66 @@
+{
+  "system": "hybrid",
+  "label": "Hybrid, RRF of the two above",
+  "description": "Reciprocal rank fusion (k=60) of the top 100 from bm25 and dense",
+  "split": "test",
+  "n_questions": 2786,
+  "n_passages": 13012,
+  "metrics": {
+    "recall@1": 0.5196159368269921,
+    "recall@5": 0.711312514955731,
+    "recall@10": 0.7677674084709261,
+    "recall@20": 0.8140823163436228,
+    "recall@100": 0.8879755922469491,
+    "map@10": 0.6105893792469529,
+    "mrr@10": 0.6787524641347326,
+    "ndcg@10": 0.6653852898954005
+  },
+  "slices_by_gold_passages": {
+    "1": {
+      "n": 2126.0,
+      "recall@10": 0.8551269990592663,
+      "ndcg@10": 0.7313331210184284
+    },
+    "2": {
+      "n": 506.0,
+      "recall@10": 0.5316205533596838,
+      "ndcg@10": 0.4816043899259802
+    },
+    "3+": {
+      "n": 154.0,
+      "recall@10": 0.33766233766233766,
+      "ndcg@10": 0.35881416273286454
+    }
+  },
+  "latency_ms": {
+    "p50": 124.37960001989268,
+    "p95": 365.2694999909727,
+    "mean": 158.3926770638259
+  },
+  "index_seconds": 1041.6848944000085,
+  "index_from_cache": false,
+  "api_cost_usd_per_1k_queries": 0.0,
+  "command": "uv run regrag eval --system hybrid --split test",
+  "model": null,
+  "dataset": {
+    "repo": "RegNLP/ObliQADataset",
+    "commit": "c1b2c3c04aee1f6ce75f76106ce13af672d48e02"
+  },
+  "environment": {
+    "python": "3.12.10",
+    "os": "Windows-10-10.0.19045-SP0",
+    "cpu": "Intel(R) Core(TM) i7-10510U CPU @ 1.80GHz",
+    "logical_cpus": 8,
+    "torch_threads": 4,
+    "packages": {
+      "bm25s": "0.3.16",
+      "PyStemmer": "3.1.0",
+      "numpy": "2.5.4",
+      "sentence-transformers": "6.2.0",
+      "transformers": "5.22.2",
+      "torch": "2.15.0+cpu"
+    }
+  },
+  "regrag_version": "0.1.0",
+  "created_utc": "2026-11-09T20:48:32+00:00"
+}

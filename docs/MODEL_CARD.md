@@ -9,7 +9,7 @@ Retrieval systems that rank ADGM regulatory passages for a compliance question a
 | BM25 | `bm25s` 0.3.16, Lucene scoring, k1 = 1.5, b = 0.75, 33 English stopwords, Snowball stemmer (`PyStemmer`), rule numbers such as 11.2.1 kept as one token | MIT; PyStemmer MIT and BSD |
 | Dense | [BAAI/bge-small-en-v1.5](https://huggingface.co/BAAI/bge-small-en-v1.5) at revision `5c38ec7c405e`: 33M parameters, 384 dimensions, 512 token limit, BGE query instruction on questions, exact cosine search | MIT |
 | Hybrid | Reciprocal rank fusion (k = 60) over the top 100 from BM25 and dense | |
-| Ablations | BM25 without stemming; [BAAI/bge-base-en-v1.5](https://huggingface.co/BAAI/bge-base-en-v1.5) at revision `a5beb1e3e68b` (110M parameters) alone and fused with BM25 | MIT |
+| Ablations | BM25 without stemming, in the default run. Optional because it is slow on a laptop CPU: [BAAI/bge-base-en-v1.5](https://huggingface.co/BAAI/bge-base-en-v1.5) at revision `a5beb1e3e68b` (110M parameters), alone and fused with BM25 | MIT |
 
 Model weights are downloaded from Hugging Face at the pinned revisions on first use and are never committed.
 
