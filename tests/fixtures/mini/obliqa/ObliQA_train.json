@@ -1,0 +1,5 @@
+[
+  {"QuestionID": "q-tr1", "Question": "Does an applicant pay the application fee before the Authority looks at the application?", "Passages": [{"DocumentID": 2, "PassageID": "3.1", "Passage": "An applicant for a licence must pay the application fee before the Authority considers the application."}], "Group": 1},
+  {"QuestionID": "q-tr1", "Question": "A repeated question id, which the loader keeps only once.", "Passages": [{"DocumentID": 2, "PassageID": "3.1", "Passage": "An applicant for a licence must pay the application fee before the Authority considers the application."}], "Group": 1},
+  {"QuestionID": "q-tr2", "Question": "Where must the money laundering reporting officer live?", "Passages": [{"DocumentID": 1, "PassageID": "2.1.1", "Passage": "A Firm must appoint a money laundering reporting officer who is resident in the jurisdiction."}, {"DocumentID": 1, "PassageID": "2.1.1", "Passage": "A Firm must appoint a money laundering reporting officer who is resident in the jurisdiction."}], "Group": 1}
+]

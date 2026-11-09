@@ -1,0 +1,5 @@
+[
+  {"QuestionID": "q-t1", "Question": "Must virtual asset custodians keep client assets separate from their own?", "Passages": [{"DocumentID": 2, "PassageID": "4.1", "Passage": "Virtual asset custodians must keep client assets segregated from their own assets."}], "Group": 1},
+  {"QuestionID": "q-t2", "Question": "How often should a custodian reconcile client holdings under Rule 4.1.3?", "Passages": [{"DocumentID": 2, "PassageID": "4.2", "Passage": "A custodian must reconcile client virtual asset holdings at least once each business day, as required by Rule 4.1.3."}], "Group": 1},
+  {"QuestionID": "q-t3", "Question": "What capital must a firm hold, and when must it notify the Authority of a shortfall?", "Passages": [{"DocumentID": 1, "PassageID": "1.1.1", "Passage": "A Firm must hold capital resources of at least the amount set out in the capital table at all times."}, {"DocumentID": 1, "PassageID": "1.1.2", "Passage": "A Firm must notify the Authority within 10 business days if its capital falls below the required amount."}], "Group": 2}
+]

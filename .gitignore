@@ -1,0 +1,37 @@
+# Data, caches and model files never go into git
+data/
+runs/
+ci-output/
+models/
+*.npy
+*.npz
+*.pt
+*.pth
+*.bin
+*.safetensors
+*.onnx
+*.gguf
+*.ckpt
+*.parquet
+*.zip
+
+# Secrets
+.env
+.env.*
+!.env.example
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+.pytest_cache/
+.ruff_cache/
+*.egg-info/
+build/
+dist/
+
+# OS and editors
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/

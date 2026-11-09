@@ -1,0 +1,10 @@
+[
+  {"ID": "p-1-1", "DocumentID": 1, "PassageID": "1.", "Passage": "INTRODUCTION"},
+  {"ID": "p-1-2", "DocumentID": 1, "PassageID": "1.1.1", "Passage": "A Firm must hold capital resources of at least the amount set out in the capital table at all times."},
+  {"ID": "p-1-3", "DocumentID": 1, "PassageID": "1.1.2", "Passage": "A Firm must notify the Authority within 10 business days if its capital falls below the required amount."},
+  {"ID": "p-1-4", "DocumentID": 1, "PassageID": "2.", "Passage": ""},
+  {"ID": "p-1-5", "DocumentID": 1, "PassageID": "2.1.1", "Passage": "A Firm must appoint a money laundering reporting officer who is resident in the jurisdiction."},
+  {"ID": "p-1-6", "DocumentID": 1, "PassageID": "2.1.2", "Passage": "The money laundering reporting officer must report suspicious transactions to the financial intelligence unit without delay."},
+  {"ID": "p-1-7", "DocumentID": 1, "PassageID": "Guidance 1.", "Passage": "The Authority expects senior management to review customer due diligence controls every year."},
+  {"ID": "p-1-8", "DocumentID": 1, "PassageID": "Guidance 1.", "Passage": "Customer due diligence records must be kept for six years after the business relationship ends."}
+]

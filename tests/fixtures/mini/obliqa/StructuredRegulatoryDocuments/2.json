@@ -1,0 +1,7 @@
+[
+  {"ID": "p-2-1", "DocumentID": 2, "PassageID": "3.1", "Passage": "An applicant for a licence must pay the application fee before the Authority considers the application."},
+  {"ID": "p-2-2", "DocumentID": 2, "PassageID": "3.2", "Passage": "Licence holders pay an annual fee by 31 January each year."},
+  {"ID": "p-2-3", "DocumentID": 2, "PassageID": "3.3", "Passage": "A licence may be withdrawn if the annual fee is not paid within 30 days of the due date."},
+  {"ID": "p-2-4", "DocumentID": 2, "PassageID": "4.1", "Passage": "Virtual asset custodians must keep client assets segregated from their own assets."},
+  {"ID": "p-2-5", "DocumentID": 2, "PassageID": "4.2", "Passage": "A custodian must reconcile client virtual asset holdings at least once each business day, as required by Rule 4.1.3."}
+]

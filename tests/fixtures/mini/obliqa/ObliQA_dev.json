@@ -1,0 +1,6 @@
+[
+  {"QuestionID": "q-d1", "Question": "How soon must a firm tell the Authority that its capital is below the required amount?", "Passages": [{"DocumentID": 1, "PassageID": "1.1.2", "Passage": "A Firm must notify the Authority within 10 business days if its capital falls below the required amount."}], "Group": 1},
+  {"QuestionID": "q-d2", "Question": "When is the annual licence fee due, and what happens if the fee is not paid?", "Passages": [{"DocumentID": 2, "PassageID": "3.2", "Passage": "Licence holders pay an annual fee by 31 January each year."}, {"DocumentID": 2, "PassageID": "3.3", "Passage": "A licence may be withdrawn if the annual fee is not paid within 30 days of the due date."}], "Group": 2},
+  {"QuestionID": "q-d3", "Question": "How long must customer due diligence records be kept?", "Passages": [{"DocumentID": 1, "PassageID": "Guidance 1.", "Passage": "Customer due diligence records must be kept for six years after the business relationship ends."}], "Group": 1},
+  {"QuestionID": "q-d4", "Question": "Who does the money laundering reporting officer report suspicious transactions to?", "Passages": [{"DocumentID": 1, "PassageID": "2.1.2", "Passage": "The money laundering reporting officer must report suspicious transactions to the financial intelligence unit without delay."}], "Group": 3}
+]

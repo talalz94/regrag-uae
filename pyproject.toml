@@ -1,0 +1,66 @@
+[project]
+name = "regrag-uae"
+version = "0.1.0"
+description = "Cited answers over ADGM rules, starting with measured retrieval on the ObliQA benchmark."
+readme = "README.md"
+license = "MIT"
+license-files = ["LICENSE"]
+authors = [{ name = "Talal Zahid" }]
+requires-python = ">=3.12,<3.14"
+dependencies = [
+    "bm25s==0.3.16",
+    "PyStemmer==3.1.0",
+    "numpy==2.5.4",
+    "httpx==0.28.1",
+    "sentence-transformers==6.2.0",
+    "torch==2.15.0",
+]
+
+[project.scripts]
+regrag = "regrag.cli:main"
+
+[dependency-groups]
+dev = [
+    "pytest==9.2.0",
+    "ruff==0.17.4",
+    "poethepoet==0.49.0",
+]
+
+[build-system]
+requires = ["hatchling>=1.27"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/regrag"]
+
+# CPU wheels for PyTorch on every platform: small installs, no CUDA download in CI.
+[tool.uv.sources]
+torch = [{ index = "pytorch-cpu" }]
+
+[[tool.uv.index]]
+name = "pytorch-cpu"
+url = "https://download.pytorch.org/whl/cpu"
+explicit = true
+
+[tool.poe.tasks]
+download = { cmd = "regrag download", help = "Fetch ObliQA from its source repo (asks you to accept its notice)" }
+reproduce = { cmd = "regrag reproduce", help = "Run every system on dev and test, then rewrite the README results" }
+quickstart = { sequence = ["download", "reproduce"], help = "Download the data and reproduce every number" }
+lint = { cmd = "ruff check .", help = "Lint" }
+format = { cmd = "ruff format .", help = "Format the code" }
+test = { cmd = "pytest -q", help = "Unit tests on the synthetic sample" }
+check = { sequence = ["lint", { cmd = "ruff format --check ." }, "test"], help = "What CI runs" }
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "UP", "B", "SIM", "RUF"]
+
+[tool.ruff.lint.per-file-ignores]
+"src/regrag/_checksums.py" = ["E501"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-ra"
