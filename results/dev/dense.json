@@ -6,25 +6,25 @@
   "n_questions": 2788,
   "n_passages": 13012,
   "metrics": {
-    "recall@1": 0.4336681013868962,
-    "recall@5": 0.6402797704447633,
+    "recall@1": 0.434026781444285,
+    "recall@5": 0.6401004304160688,
     "recall@10": 0.7032520325203252,
     "recall@20": 0.7555535628885701,
     "recall@100": 0.8475011956001912,
-    "map@10": 0.5269708970986768,
-    "mrr@10": 0.5833840040081073,
-    "ndcg@10": 0.5839782494390503
+    "map@10": 0.527009754104894,
+    "mrr@10": 0.5834079160119332,
+    "ndcg@10": 0.5839956044136472
   },
   "slices_by_gold_passages": {
     "1": {
       "n": 2115.0,
       "recall@10": 0.7914893617021277,
-      "ndcg@10": 0.6509295892445968
+      "ndcg@10": 0.6510298726029061
     },
     "2": {
       "n": 514.0,
       "recall@10": 0.4591439688715953,
-      "ndcg@10": 0.39294782969376574
+      "ndcg@10": 0.3926293206788865
     },
     "3+": {
       "n": 159.0,
@@ -33,17 +33,21 @@
     }
   },
   "latency_ms": {
-    "p50": 55.37014998844825,
-    "p95": 118.58514998166358,
-    "mean": 65.22196040157155
+    "p50": 61.96540000382811,
+    "p95": 110.5133300763555,
+    "mean": 68.39416800585437
   },
-  "index_seconds": 1038.5929178000079,
+  "index_seconds": 889.2595539999893,
   "index_from_cache": false,
+  "model_load_seconds": 45.100099300034344,
   "api_cost_usd_per_1k_queries": 0.0,
   "command": "uv run regrag eval --system dense --split dev",
   "model": {
     "name": "BAAI/bge-small-en-v1.5",
     "revision": "5c38ec7c405ec4b44b94cc5a9bb96e735b38267a",
+    "query_prefix": "Represent this sentence for searching relevant passages: ",
+    "passage_prefix": "",
+    "max_seq_length": 512,
     "license": "MIT"
   },
   "dataset": {
@@ -66,5 +70,5 @@
     }
   },
   "regrag_version": "0.1.0",
-  "created_utc": "2026-11-09T20:28:18+00:00"
+  "created_utc": "2026-11-10T19:56:59+00:00"
 }

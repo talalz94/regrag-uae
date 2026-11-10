@@ -6,42 +6,50 @@
   "n_questions": 2788,
   "n_passages": 13012,
   "metrics": {
-    "recall@1": 0.5148613103778097,
-    "recall@5": 0.7179878048780488,
+    "recall@1": 0.5112924438067911,
+    "recall@5": 0.7182867049258728,
     "recall@10": 0.7641200382592062,
-    "recall@20": 0.8132592061214731,
-    "recall@100": 0.8875418460066954,
-    "map@10": 0.6087232318401615,
-    "mrr@10": 0.6785449545671928,
-    "ndcg@10": 0.6638632923382449
+    "recall@20": 0.8127211860353898,
+    "recall@100": 0.8881994261119083,
+    "map@10": 0.6069496158897162,
+    "mrr@10": 0.6767783129511966,
+    "ndcg@10": 0.6625525380174916
   },
   "slices_by_gold_passages": {
     "1": {
       "n": 2115.0,
       "recall@10": 0.8515366430260047,
-      "ndcg@10": 0.729813382486284
+      "ndcg@10": 0.7273639899367436
     },
     "2": {
       "n": 514.0,
       "recall@10": 0.5252918287937743,
-      "ndcg@10": 0.47855739576236506
+      "ndcg@10": 0.48317597925635253
     },
     "3+": {
       "n": 159.0,
       "recall@10": 0.3733752620545073,
-      "ndcg@10": 0.3856418469099415
+      "ndcg@10": 0.3803093329483559
     }
   },
   "latency_ms": {
-    "p50": 97.17954997904599,
-    "p95": 260.120794994873,
-    "mean": 120.3139399928804
+    "p50": 63.66260000504553,
+    "p95": 146.14453003159727,
+    "mean": 76.47462941174545
   },
-  "index_seconds": 1041.6848944000085,
+  "index_seconds": 890.976250100066,
   "index_from_cache": false,
+  "model_load_seconds": null,
   "api_cost_usd_per_1k_queries": 0.0,
   "command": "uv run regrag eval --system hybrid --split dev",
-  "model": null,
+  "model": {
+    "name": "BAAI/bge-small-en-v1.5",
+    "revision": "5c38ec7c405ec4b44b94cc5a9bb96e735b38267a",
+    "query_prefix": "Represent this sentence for searching relevant passages: ",
+    "passage_prefix": "",
+    "max_seq_length": 512,
+    "license": "MIT"
+  },
   "dataset": {
     "repo": "RegNLP/ObliQADataset",
     "commit": "c1b2c3c04aee1f6ce75f76106ce13af672d48e02"
@@ -62,5 +70,5 @@
     }
   },
   "regrag_version": "0.1.0",
-  "created_utc": "2026-11-09T20:41:07+00:00"
+  "created_utc": "2026-11-10T20:05:41+00:00"
 }

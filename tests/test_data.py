@@ -6,7 +6,15 @@ import httpx
 import pytest
 
 from regrag._checksums import CHECKSUMS
-from regrag.data import ChecksumError, download, load_corpus, load_questions
+from regrag.data import (
+    OBLIQA_COMMIT,
+    OBLIQA_REPO,
+    ChecksumError,
+    dataset_source,
+    download,
+    load_corpus,
+    load_questions,
+)
 
 
 def test_corpus_drops_empty_passages(corpus):
@@ -60,6 +68,27 @@ def test_missing_data_points_to_download(tmp_path):
         load_corpus(tmp_path)
 
 
+def test_data_without_a_manifest_is_refused(tmp_path):
+    (tmp_path / "obliqa").mkdir()
+    with pytest.raises(FileNotFoundError, match="did not finish"):
+        load_corpus(tmp_path)
+
+
+def test_data_from_another_commit_is_refused(tmp_path):
+    (tmp_path / "obliqa").mkdir()
+    stale = {"repo": OBLIQA_REPO, "commit": "0" * 40}
+    (tmp_path / "obliqa" / "MANIFEST.json").write_text(json.dumps(stale), encoding="utf-8")
+    with pytest.raises(FileNotFoundError, match="regrag download"):
+        dataset_source(tmp_path)
+
+
+def test_the_fixture_manifest_does_not_claim_to_be_obliqa(data_dir):
+    assert dataset_source(data_dir) == {
+        "repo": "synthetic test fixture, not ObliQA",
+        "commit": None,
+    }
+
+
 def test_unknown_split_raises(corpus, data_dir):
     with pytest.raises(ValueError, match="Unknown split"):
         load_questions("validation", corpus, data_dir)
@@ -94,6 +123,9 @@ def test_download_writes_verified_files_and_skips_them_next_time(tmp_path):
     target = download(tmp_path, client=client, base_url="https://x.test/pinned", checksums=SUMS)
     assert (target / "StructuredRegulatoryDocuments" / "1.json").read_bytes() == b"[]"
     assert len(calls) == 3
+    manifest = json.loads((target / "MANIFEST.json").read_text(encoding="utf-8"))
+    assert manifest == {"repo": OBLIQA_REPO, "commit": OBLIQA_COMMIT}
+    assert dataset_source(tmp_path) == manifest
     download(tmp_path, client=client, base_url="https://x.test/pinned", checksums=SUMS)
     assert len(calls) == 3  # nothing fetched again
 
@@ -108,6 +140,32 @@ def test_download_can_skip_train(tmp_path):
         checksums=SUMS,
     )
     assert "ObliQA_train.json" not in calls
+    assert not (tmp_path / "obliqa" / "ObliQA_train.json").exists()
+    assert (tmp_path / "obliqa" / "MANIFEST.json").exists()
+
+
+def test_skip_train_still_checks_a_train_file_that_is_already_there(tmp_path):
+    pinned = {"base_url": "https://x.test/pinned", "checksums": SUMS}
+    train = tmp_path / "obliqa" / "ObliQA_train.json"
+    train.parent.mkdir(parents=True)
+    train.write_bytes(FILES["ObliQA_train.json"])
+    seen: dict[str, str] = {}
+    calls: list[str] = []
+    download(
+        tmp_path,
+        include_train=False,
+        client=_mock_client(FILES, calls),
+        on_file=lambda rel, status: seen.update({rel: status}),
+        **pinned,
+    )
+    assert seen["ObliQA_train.json"] == "ok"
+    assert "ObliQA_train.json" not in calls
+
+    train.write_bytes(b'[{"edited": true}]')
+    with pytest.raises(ChecksumError, match="--skip-train"):
+        download(tmp_path, include_train=False, client=_mock_client(FILES, []), **pinned)
+    assert not (tmp_path / "obliqa" / "MANIFEST.json").exists()
+    assert train.read_bytes() == b'[{"edited": true}]'  # reported, never deleted
 
 
 def test_download_rejects_a_changed_file(tmp_path):
@@ -120,3 +178,16 @@ def test_download_rejects_a_changed_file(tmp_path):
             checksums=SUMS,
         )
     assert not (tmp_path / "obliqa" / "ObliQA_dev.json").exists()
+    assert not (tmp_path / "obliqa" / "MANIFEST.json").exists()
+
+
+def test_a_failed_download_removes_the_old_manifest(tmp_path):
+    pinned = {"base_url": "https://x.test/pinned", "checksums": SUMS}
+    download(tmp_path, client=_mock_client(FILES, []), **pinned)
+    assert (tmp_path / "obliqa" / "MANIFEST.json").exists()
+    tampered = dict(FILES, **{"ObliQA_dev.json": b"[]  "})
+    with pytest.raises(ChecksumError):
+        download(tmp_path, force=True, client=_mock_client(tampered, []), **pinned)
+    assert not (tmp_path / "obliqa" / "MANIFEST.json").exists()
+    with pytest.raises(FileNotFoundError, match="did not finish"):
+        dataset_source(tmp_path)

@@ -6,42 +6,50 @@
   "n_questions": 2786,
   "n_passages": 13012,
   "metrics": {
-    "recall@1": 0.5196159368269921,
+    "recall@1": 0.5192390524048816,
     "recall@5": 0.711312514955731,
-    "recall@10": 0.7677674084709261,
-    "recall@20": 0.8140823163436228,
-    "recall@100": 0.8879755922469491,
-    "map@10": 0.6105893792469529,
-    "mrr@10": 0.6787524641347326,
-    "ndcg@10": 0.6653852898954005
+    "recall@10": 0.7679468772433596,
+    "recall@20": 0.8137233787987557,
+    "recall@100": 0.8881550610193827,
+    "map@10": 0.6104920482989399,
+    "mrr@10": 0.6782409781332969,
+    "ndcg@10": 0.6652852574653477
   },
   "slices_by_gold_passages": {
     "1": {
       "n": 2126.0,
       "recall@10": 0.8551269990592663,
-      "ndcg@10": 0.7313331210184284
+      "ndcg@10": 0.7316066868390152
     },
     "2": {
       "n": 506.0,
-      "recall@10": 0.5316205533596838,
-      "ndcg@10": 0.4816043899259802
+      "recall@10": 0.532608695652174,
+      "ndcg@10": 0.4797703010058713
     },
     "3+": {
       "n": 154.0,
       "recall@10": 0.33766233766233766,
-      "ndcg@10": 0.35881416273286454
+      "ndcg@10": 0.3592541478554652
     }
   },
   "latency_ms": {
-    "p50": 124.37960001989268,
-    "p95": 365.2694999909727,
-    "mean": 158.3926770638259
+    "p50": 57.55869997665286,
+    "p95": 88.48689994192682,
+    "mean": 62.4612104084576
   },
-  "index_seconds": 1041.6848944000085,
+  "index_seconds": 890.976250100066,
   "index_from_cache": false,
+  "model_load_seconds": null,
   "api_cost_usd_per_1k_queries": 0.0,
   "command": "uv run regrag eval --system hybrid --split test",
-  "model": null,
+  "model": {
+    "name": "BAAI/bge-small-en-v1.5",
+    "revision": "5c38ec7c405ec4b44b94cc5a9bb96e735b38267a",
+    "query_prefix": "Represent this sentence for searching relevant passages: ",
+    "passage_prefix": "",
+    "max_seq_length": 512,
+    "license": "MIT"
+  },
   "dataset": {
     "repo": "RegNLP/ObliQADataset",
     "commit": "c1b2c3c04aee1f6ce75f76106ce13af672d48e02"
@@ -62,5 +70,5 @@
     }
   },
   "regrag_version": "0.1.0",
-  "created_utc": "2026-11-09T20:48:32+00:00"
+  "created_utc": "2026-11-10T20:08:38+00:00"
 }

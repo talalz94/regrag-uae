@@ -3,6 +3,8 @@
 ObliQA has no license file, so this repo never hosts a copy. `regrag download`
 fetches the files from the authors' GitHub repo at a pinned commit, checks the
 SHA-256 of every file and keeps them in the local data directory, which git ignores.
+Once every file has passed, it writes MANIFEST.json with the source repo and commit.
+Loading refuses a folder without it, and every saved result copies its contents.
 """
 
 from __future__ import annotations
@@ -25,6 +27,7 @@ OBLIQA_URL = f"https://github.com/{OBLIQA_REPO}"
 RAW_BASE_URL = f"https://raw.githubusercontent.com/{OBLIQA_REPO}/{OBLIQA_COMMIT}"
 SPLITS = ("train", "dev", "test")
 DOCS_DIR = "StructuredRegulatoryDocuments"
+MANIFEST = "MANIFEST.json"  # in obliqa/, not in DOCS_DIR, whose file names must be numbers
 
 NOTICE = f"""\
 ObliQA dataset notice
@@ -90,17 +93,34 @@ def download(
 ) -> Path:
     """Fetch ObliQA into `data_dir/obliqa`, verifying every file. Returns that folder.
 
-    Files that are already present with the right checksum are skipped.
+    Files that are already present with the right checksum are skipped. With
+    `include_train=False` the train split is not fetched, but a copy that is already
+    there is still checked. The manifest is removed first and written last, so it exists
+    only when every file passed.
     """
     target = obliqa_dir(data_dir)
+    manifest = target / MANIFEST
+    manifest.unlink(missing_ok=True)
     own_client = client is None
     http = client or httpx.Client(timeout=60.0, follow_redirects=True)
     try:
         for rel in checksums:
-            if not include_train and rel == "ObliQA_train.json":
-                continue
             dest = target / rel
             expected = checksums[rel]
+            if not include_train and rel == "ObliQA_train.json":
+                # Not fetched, but a copy from an earlier download is still checked, so the
+                # manifest never vouches for a file that nothing verified.
+                if dest.exists():
+                    actual = sha256_bytes(dest.read_bytes())
+                    if actual != expected:
+                        raise ChecksumError(
+                            f"{rel}: expected sha256 {expected}, got {actual}. This copy was "
+                            "already there and --skip-train leaves it as it is. Delete it, or "
+                            "run `regrag download` without --skip-train to fetch it again."
+                        )
+                    if on_file:
+                        on_file(rel, "ok")
+                continue
             if dest.exists() and not force and sha256_bytes(dest.read_bytes()) == expected:
                 if on_file:
                     on_file(rel, "ok")
@@ -110,7 +130,9 @@ def download(
             data = response.content
             actual = sha256_bytes(data)
             if actual != expected:
-                raise ChecksumError(f"{rel}: expected sha256 {expected}, got {actual}")
+                raise ChecksumError(
+                    f"{rel}: expected sha256 {expected}, got {actual}. The file was not saved."
+                )
             dest.parent.mkdir(parents=True, exist_ok=True)
             partial = dest.with_name(dest.name + ".part")
             partial.write_bytes(data)
@@ -120,7 +142,37 @@ def download(
     finally:
         if own_client:
             http.close()
+    target.mkdir(parents=True, exist_ok=True)
+    partial = manifest.with_name(MANIFEST + ".part")
+    source = {"repo": OBLIQA_REPO, "commit": OBLIQA_COMMIT}
+    partial.write_text(json.dumps(source, indent=2) + "\n", encoding="utf-8", newline="\n")
+    partial.replace(manifest)
     return target
+
+
+def dataset_source(data_dir: Path | None = None) -> dict:
+    """Return the manifest that `download` writes once every file has passed its checksum.
+
+    It proves the download finished, and it is the dataset record saved with every
+    result, so a partial or stale copy is never searched or labelled as the pinned commit.
+    """
+    folder = obliqa_dir(data_dir)
+    if not folder.is_dir():
+        raise FileNotFoundError(f"No ObliQA data in {folder}. Run `regrag download` first.")
+    manifest = folder / MANIFEST
+    if not manifest.exists():
+        raise FileNotFoundError(
+            f"`regrag download` did not finish in {folder} (or ran before regrag wrote "
+            f"{MANIFEST}). Run it again; files already verified are kept."
+        )
+    source = json.loads(manifest.read_text(encoding="utf-8"))
+    commit = source.get("commit")
+    if commit is not None and commit != OBLIQA_COMMIT:
+        raise FileNotFoundError(
+            f"{folder} holds ObliQA commit {commit[:12]}, but this regrag expects "
+            f"{OBLIQA_COMMIT[:12]}. Run `regrag download` again to fetch the pinned files."
+        )
+    return source
 
 
 def _read_json(path: Path) -> list[dict]:
@@ -133,8 +185,10 @@ def load_corpus(data_dir: Path | None = None, *, drop_empty: bool = True) -> lis
     """Load every passage of the 40 structured documents, in document order.
 
     Empty passages (section breaks in the source) are dropped by default. None of
-    them is ever a gold passage, and they cannot be matched by any query.
+    them is ever a gold passage, and they cannot be matched by any query. Raises
+    FileNotFoundError when `regrag download` has not finished (see `dataset_source`).
     """
+    dataset_source(data_dir)
     docs = obliqa_dir(data_dir) / DOCS_DIR
     files = sorted(docs.glob("*.json"), key=lambda p: int(p.stem))
     if not files:

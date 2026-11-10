@@ -16,7 +16,7 @@ from typing import Protocol
 import numpy as np
 
 from regrag.data import Passage
-from regrag.retrievers.base import Hit
+from regrag.retrievers.base import Hit, pid_ranks, top_k
 
 
 @dataclass(frozen=True)
@@ -31,6 +31,14 @@ class ModelSpec:
     @property
     def key(self) -> str:
         return f"{self.name}@{self.revision[:12]}"
+
+    @property
+    def passage_key(self) -> str:
+        """Every setting that changes a passage vector. The query prefix does not."""
+        return (
+            f"{self.key}|max_seq_length={self.max_seq_length}"
+            f"|passage_prefix={self.passage_prefix!r}"
+        )
 
 
 BGE_QUERY_PREFIX = "Represent this sentence for searching relevant passages: "
@@ -76,6 +84,7 @@ class SentenceTransformerEncoder:
 
         self.spec = spec
         self.key = spec.key
+        self.cache_key = spec.passage_key  # names the embedding cache file, see DenseRetriever
         self.batch_size = batch_size
         self.show_progress = show_progress
         self.model = SentenceTransformer(spec.name, revision=spec.revision, device=device)
@@ -114,18 +123,23 @@ class DenseRetriever:
         self.cache_dir = cache_dir
         self.loaded_from_cache = False
         self._pids: list[str] = []
+        self._ranks = np.empty(0, dtype=np.int64)
         self._matrix: np.ndarray | None = None
 
     def _cache_path(self, passages: Sequence[Passage]) -> Path | None:
         if self.cache_dir is None:
             return None
         slug = self.encoder.key.replace("/", "__").replace("@", "_")
-        return self.cache_dir / f"{slug}_{corpus_fingerprint(self.encoder.key, passages)}.npy"
+        # An encoder can name every setting behind its passage vectors in `cache_key`,
+        # so changing any of them never reuses embeddings made with the old ones.
+        key = getattr(self.encoder, "cache_key", self.encoder.key)
+        return self.cache_dir / f"{slug}_{corpus_fingerprint(key, passages)}.npy"
 
     def index(self, passages: Sequence[Passage]) -> None:
         if not passages:
             raise ValueError("cannot index an empty corpus")
         self._pids = [p.pid for p in passages]
+        self._ranks = pid_ranks(self._pids)
         path = self._cache_path(passages)
         if path is not None and path.exists():
             self._matrix = np.load(path)
@@ -142,7 +156,4 @@ class DenseRetriever:
             raise RuntimeError("call index() before search()")
         q = self.encoder.encode_queries([query])[0]
         scores = self._matrix @ q
-        k = min(k, len(self._pids))
-        top = np.argpartition(-scores, k - 1)[:k]
-        top = top[np.argsort(-scores[top], kind="stable")]
-        return [Hit(self._pids[int(i)], float(scores[i])) for i in top]
+        return [Hit(self._pids[int(i)], float(scores[i])) for i in top_k(scores, k, self._ranks)]

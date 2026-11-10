@@ -37,6 +37,13 @@ SPECS: dict[str, SystemSpec] = {
             "BM25",
             "bm25s, Lucene scoring (k1=1.5, b=0.75), English stopwords, Snowball stemming",
         ),
+        # Right after bm25, so both lexical systems are timed back to back before torch loads.
+        SystemSpec(
+            "bm25-nostem",
+            "BM25 without stemming",
+            "Same as bm25 but without the stemmer",
+            ablation=True,
+        ),
         SystemSpec(
             "dense",
             "Dense, bge-small-en-v1.5",
@@ -46,12 +53,6 @@ SPECS: dict[str, SystemSpec] = {
             "hybrid",
             "Hybrid, RRF of the two above",
             "Reciprocal rank fusion (k=60) of the top 100 from bm25 and dense",
-        ),
-        SystemSpec(
-            "bm25-nostem",
-            "BM25 without stemming",
-            "Same as bm25 but without the stemmer",
-            ablation=True,
         ),
         SystemSpec(
             "dense-base",
@@ -77,6 +78,12 @@ DEFAULT_REPRODUCE = [name for name, spec in SPECS.items() if not spec.slow]
 _DENSE_MODEL = {"dense": "bge-small", "dense-base": "bge-base"}
 _HYBRID_PARTS = {"hybrid": ("bm25", "dense"), "hybrid-base": ("bm25", "dense-base")}
 
+
+def needs_torch(name: str) -> bool:
+    """True for systems that load an embedding model, and with it PyTorch."""
+    return name in _DENSE_MODEL or name in _HYBRID_PARTS
+
+
 EncoderFactory = Callable[[ModelSpec], Encoder]
 
 
@@ -99,6 +106,9 @@ class Systems:
         self.encoder_factory = encoder_factory
         self.index_seconds: dict[str, float] = {}
         self.index_from_cache: dict[str, bool] = {}
+        # Time to create each dense system's encoder. The first one in a process also
+        # includes importing PyTorch; none of it counts as index or query time.
+        self.load_seconds: dict[str, float] = {}
         self._encoders: dict[str, Encoder] = {}
         self._built: dict[str, Retriever] = {}
 
@@ -108,8 +118,10 @@ class Systems:
         return self._encoders[model]
 
     def model_spec(self, name: str) -> ModelSpec | None:
-        model = _DENSE_MODEL.get(name)
-        return MODELS[model] if model else None
+        """The embedding model behind a system: its own if dense, its dense part's if hybrid."""
+        parts = _HYBRID_PARTS.get(name, (name,))
+        models = [_DENSE_MODEL[part] for part in parts if part in _DENSE_MODEL]
+        return MODELS[models[0]] if models else None
 
     def get(self, name: str) -> Retriever:
         if name not in SPECS:
@@ -123,9 +135,10 @@ class Systems:
             self.index_from_cache[name] = any(self.index_from_cache[p] for p in _HYBRID_PARTS[name])
         else:
             if name in _DENSE_MODEL:
-                retriever = DenseRetriever(
-                    self._encoder(_DENSE_MODEL[name]), cache_dir=self.cache_dir, name=name
-                )
+                start = time.perf_counter()
+                encoder = self._encoder(_DENSE_MODEL[name])
+                self.load_seconds[name] = time.perf_counter() - start
+                retriever = DenseRetriever(encoder, cache_dir=self.cache_dir, name=name)
             else:
                 retriever = BM25Retriever(stem=(name == "bm25"), name=name)
             start = time.perf_counter()

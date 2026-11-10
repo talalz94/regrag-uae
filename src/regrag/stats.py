@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import re
 import statistics
-from collections import Counter
+from collections import Counter, defaultdict
 from pathlib import Path
 
 import numpy as np
@@ -32,6 +32,12 @@ def dataset_stats(data_dir: Path | None = None) -> dict:
     by_pid = {p.pid: p for p in corpus}
     index = _gold_index(corpus)
     shared = {key: n for key, n in Counter((p.doc_id, p.ref) for p in corpus).items() if n > 1}
+    # Passages with exactly the same text get the same BM25 score, so only the tie order
+    # can rank a gold passage above its twin.
+    by_text: dict[str, list[str]] = defaultdict(list)
+    for p in corpus:
+        by_text[p.text].append(p.pid)
+    twins = [pids for pids in by_text.values() if len(pids) > 1]
     words = [_words(p.text) for p in corpus]
     stats: dict = {
         "documents": len({p.doc_id for p in full}),
@@ -40,15 +46,22 @@ def dataset_stats(data_dir: Path | None = None) -> dict:
         "passages_used": len(corpus),
         "references_shared_by_several_passages": len(shared),
         "passages_with_a_shared_reference": sum(shared.values()),
+        "texts_shared_by_several_passages": len(twins),
+        "passages_with_a_shared_text": sum(len(pids) for pids in twins),
         "passage_words": {
             "median": float(np.median(words)),
             "p95": float(np.percentile(words, 95, method="nearest")),
             "max": max(words),
+            "total": sum(words),  # words are counted by splitting on whitespace
         },
         "splits": {},
     }
     for split in SPLITS:
-        rows = _read_json(obliqa_dir(data_dir) / f"ObliQA_{split}.json")
+        path = obliqa_dir(data_dir) / f"ObliQA_{split}.json"
+        if not path.exists():  # for example after `regrag download --skip-train`
+            stats["splits"][split] = "not downloaded"
+            continue
+        rows = _read_json(path)
         questions = load_questions(split, corpus, data_dir)
         text_differs = sum(
             1
@@ -56,6 +69,14 @@ def dataset_stats(data_dir: Path | None = None) -> dict:
             for ref in row["Passages"]
             if by_pid[_resolve_gold(index, ref)].text != ref["Passage"]
         )
+        # Gold references whose passage has a twin with the same text that is not gold
+        # for the same question.
+        twin_refs = [
+            q.qid
+            for q in questions
+            for g in q.gold
+            if any(pid not in q.gold for pid in by_text[by_pid[g].text])
+        ]
         stats["splits"][split] = {
             "rows": len(rows),
             "questions": len(questions),
@@ -71,5 +92,7 @@ def dataset_stats(data_dir: Path | None = None) -> dict:
             ),
             "median_question_words": float(statistics.median(_words(q.text) for q in questions)),
             "gold_refs_whose_text_differs_from_corpus": text_differs,
+            "gold_refs_with_a_twin_that_is_not_gold": len(twin_refs),
+            "questions_with_such_a_gold_ref": len(set(twin_refs)),
         }
     return stats

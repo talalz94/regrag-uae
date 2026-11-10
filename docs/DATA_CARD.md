@@ -24,11 +24,11 @@ Cite the paper if you use the data. For anything beyond research, contact the au
 
 ## Composition
 
-Counts in this section come from `uv run regrag stats`. Figures about how the data was built are quoted from the authors.
+Counts in this section come from `uv run regrag stats`, which counts words by splitting text on whitespace. Figures about how the data was built are quoted from the authors.
 
 | Part | Count |
 |---|---:|
-| Regulatory documents | 40 (about 640,000 words) |
+| Regulatory documents | 40 (about 836,000 words) |
 | Passages in the structured documents | 13,732 |
 | Empty passages (section breaks), dropped | 720 |
 | Passages in the corpus used here | 13,012 |
@@ -43,7 +43,7 @@ Gold passages per question:
 | Dev | 2,115 | 514 | 116 | 30 | 12 | 1 |
 | Test | 2,126 | 506 | 105 | 36 | 9 | 4 |
 
-In the test split, 221 questions have gold passages in more than one document and 354 cite a rule by its number. The median question has 27 words. The median passage has 42 words, the 95th percentile 163, and the longest (a definitions table) 24,312.
+In the test split, 221 questions have gold passages in more than one document and 354 cite a rule by its number. In the train split, 2,668 of the 22,291 questions cite a rule by its number. The median question has 27 words. The median passage has 42 words, the 95th percentile 163, and the longest (a definitions table) 24,312.
 
 ## How the authors built it
 
@@ -56,7 +56,7 @@ From the dataset README and paper:
 
 ## Processing in this repo
 
-- **Download:** 43 files from the pinned commit (3 question files and 40 documents). Each file's SHA-256 is checked against `src/regrag/_checksums.py`.
+- **Download:** 43 files from the pinned commit (3 question files and 40 documents), or 42 with `--skip-train`. Each file's SHA-256 is checked against `src/regrag/_checksums.py`, and with `--skip-train` a train file that is already there is still checked. Only when every file has passed does `regrag download` write `MANIFEST.json` with the source repo and commit. Every command that loads the data refuses a folder without it, so a partial download is never searched, and each saved result copies the manifest as its dataset record.
 - **Corpus:** every non empty passage. None of the 720 empty passages is a gold passage.
 - **Gold mapping:** questions point at passages by document number and rule reference. That pair is unique except for 15 references shared by 39 passages; those ties are broken by exact passage text. Every gold reference in all three splits maps to exactly one corpus passage.
 - **Question ids:** the train file has 22,295 rows but 22,291 unique question ids; the loader keeps the first row for each id. Dev and test have no repeats.
@@ -64,7 +64,8 @@ From the dataset README and paper:
 ## Known quirks
 
 - The dataset README lists 2,888 dev questions. The dev file has 2,788.
-- One gold passage in dev and one in test have slightly different text in the question file than in the corpus. Their references still map to one passage.
+- One dev question (Doc 10, 4.7.7) and one test question (Doc 1, 2.Guidance.27.) have a broken copy of that gold passage in the question file: the first 13 (dev) or 16 (test) words of the corpus text, one garbled word, then the end of a different passage from Doc 19 (dev) or Doc 12 (test). The other 17 dev and 26 test questions that cite these passages have the exact corpus text, and the references still map to one passage.
+- 219 texts appear in more than one passage (650 passages in all). BM25 gives such twins the same score, so only the tie order decides which of them ranks first. That matters where a gold passage has a twin that is not gold for the same question: 13 gold references in 12 test questions, and 13 in 11 dev questions. Ties are broken the way trec_eval breaks them, by passage id in descending order.
 - Very long passages are mostly tables. The dense model reads only their first 512 tokens; BM25 reads all of them.
 - The hidden shared task test set (446 questions) is not public, so the published shared task leaderboard is not directly comparable with results on the test split.
 

@@ -26,7 +26,7 @@ Model weights are downloaded from Hugging Face at the pinned revisions on first 
 
 ## Evaluation
 
-Official ObliQA dev and test splits, binary relevance, metrics as defined in trec_eval. The main metric is Recall@10, as in the RIRAG shared task. Results, latency and the command behind every number are in the [README](../README.md#results); raw results with hardware and package versions are in `results/`.
+Official ObliQA dev and test splits, binary relevance, metrics as defined in trec_eval. Every ranking is sorted the way trec_eval sorts a run: by score, then by passage id in descending order. The main metric is Recall@10, as in the RIRAG shared task. Results, latency and the command behind every number are in the [README](../README.md#results); raw results with hardware, package versions, model settings and the dataset commit are in `results/`.
 
 ## Limitations and risks
 

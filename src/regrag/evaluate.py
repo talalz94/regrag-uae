@@ -1,4 +1,4 @@
-"""Retrieval eval harness: runs a retriever over a split and scores it against gold passages."""
+"""Retrieval evaluation: runs a retriever over a split and scores it against gold passages."""
 
 from __future__ import annotations
 
@@ -11,7 +11,7 @@ import numpy as np
 
 from regrag.data import Question
 from regrag.metrics import average_precision_at_k, ndcg_at_k, recall_at_k, reciprocal_rank_at_k
-from regrag.retrievers.base import Hit, Retriever
+from regrag.retrievers.base import Hit, Retriever, trec_order
 
 RECALL_KS = (1, 5, 10, 20, 100)
 CUTOFF = 10  # MAP, MRR and nDCG are reported at 10, like the published ObliQA baselines
@@ -53,7 +53,9 @@ def evaluate(
     """Search every question one at a time, timing each search, and average the metrics.
 
     The first `warmup` searches run once before timing starts, so one time setup
-    (model graph warmup, caches) does not land in the latency numbers.
+    (model graph warmup, caches) does not land in the latency numbers. Each ranking is
+    put in `trec_order` before it is scored, so tied passages are ranked the way
+    trec_eval ranks them and the metrics match trec_eval on the saved run file.
     """
     if not questions:
         raise ValueError("no questions to evaluate")
@@ -68,6 +70,7 @@ def evaluate(
         start = time.perf_counter()
         hits = retriever.search(q.text, depth)
         latencies.append((time.perf_counter() - start) * 1000.0)
+        hits = trec_order(hits)
         scores = score_ranking([h.pid for h in hits], q.gold)
         per_query.append(scores)
         slice_rows.setdefault(_slice_name(len(q.gold)), []).append(scores)
@@ -101,9 +104,13 @@ def evaluate(
 
 
 def write_trec_run(path: Path, result: EvalResult) -> None:
-    """Write the rankings in TREC run format: qid Q0 pid rank score system."""
+    """Write the rankings in TREC run format: qid Q0 pid rank score system.
+
+    Scores are written in full, not rounded, because trec_eval orders a run by score
+    and rounding would create ties that the metrics here never saw.
+    """
     path.parent.mkdir(parents=True, exist_ok=True)
     with path.open("w", encoding="utf-8", newline="\n") as out:
         for qid, hits in result.rankings.items():
             for rank, hit in enumerate(hits, start=1):
-                out.write(f"{qid} Q0 {hit.pid} {rank} {hit.score:.6f} {result.system}\n")
+                out.write(f"{qid} Q0 {hit.pid} {rank} {float(hit.score)!r} {result.system}\n")

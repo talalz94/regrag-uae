@@ -3,11 +3,13 @@
 from __future__ import annotations
 
 import json
+import re
+from collections.abc import Mapping
+from dataclasses import asdict
 from datetime import UTC, datetime
 from pathlib import Path
 
 from regrag import __version__
-from regrag.data import OBLIQA_COMMIT, OBLIQA_REPO
 from regrag.env import environment
 from regrag.evaluate import EvalResult
 from regrag.retrievers.dense import ModelSpec
@@ -16,6 +18,10 @@ from regrag.systems import ABLATIONS, MAIN_SYSTEMS, SPECS
 START = "<!-- results:start -->"
 END = "<!-- results:end -->"
 API_COST_PER_1K = 0.0  # every system in this slice runs locally; no API calls
+
+
+class ReadmeMarkersError(ValueError):
+    """The README does not have exactly one results block to rewrite."""
 
 
 def eval_command(system: str, split: str) -> str:
@@ -31,7 +37,10 @@ def save_result(
     index_seconds: float,
     index_from_cache: bool,
     model: ModelSpec | None,
+    dataset: Mapping[str, object],
+    model_load_seconds: float | None = None,
 ) -> Path:
+    """Write one result as JSON. `dataset` is the download manifest (`data.dataset_source`)."""
     spec = SPECS[result.system]
     payload = {
         "system": result.system,
@@ -45,14 +54,11 @@ def save_result(
         "latency_ms": result.latency_ms,
         "index_seconds": index_seconds,
         "index_from_cache": index_from_cache,
+        "model_load_seconds": model_load_seconds,
         "api_cost_usd_per_1k_queries": API_COST_PER_1K,
         "command": eval_command(result.system, split),
-        "model": (
-            {"name": model.name, "revision": model.revision, "license": model.license}
-            if model
-            else None
-        ),
-        "dataset": {"repo": OBLIQA_REPO, "commit": OBLIQA_COMMIT},
+        "model": asdict(model) if model else None,
+        "dataset": dict(dataset),
         "environment": environment(),
         "regrag_version": __version__,
         "created_utc": datetime.now(UTC).replace(microsecond=0).isoformat(),
@@ -120,18 +126,48 @@ def _index_note(rows: list[dict]) -> str:
     return "Index build time on the same machine: " + "; ".join(parts) + "."
 
 
+def _measured_on(rows: list[dict]) -> str:
+    """Describe the one machine behind the shown rows, and the dates they were measured.
+
+    Latency is only comparable on one machine, so rows from several machines are refused
+    rather than labelled with whichever machine ran last.
+    """
+    machines: dict[tuple[str, int, str], list[str]] = {}
+    for r in rows:
+        env = r["environment"]
+        key = (env["cpu"], env["logical_cpus"], env["python"])
+        machines.setdefault(key, []).append(f"{r['split']}/{r['system']}")
+    if len(machines) > 1:
+        detail = "; ".join(
+            f"{cpu}, {n_cpus} logical CPUs, Python {python}: {', '.join(names)}"
+            for (cpu, n_cpus, python), names in machines.items()
+        )
+        raise ValueError(
+            f"results come from more than one machine ({detail}). "
+            "Run them again on one machine with `regrag reproduce`."
+        )
+    ((cpu, n_cpus, python),) = machines
+    dates = sorted(r["created_utc"][:10] for r in rows)
+    when = dates[0] if dates[0] == dates[-1] else f"{dates[0]} to {dates[-1]}"
+    return f"Measured on {cpu} ({n_cpus} logical CPUs, CPU only), Python {python}, {when} UTC. "
+
+
 def render(results: dict[tuple[str, str], dict]) -> str:
+    """Render the README block. Raises ValueError if the shown rows span several machines."""
     out: list[str] = []
+    shown: list[dict] = []
     for split in ("test", "dev"):
         rows = [results[(split, s)] for s in MAIN_SYSTEMS if (split, s) in results]
         if not rows:
             continue
+        shown += rows
         n_q, n_p = rows[0]["n_questions"], rows[0]["n_passages"]
         out += [f"**{split.title()} split** ({n_q:,} questions, {n_p:,} passages)", ""]
         out += [*_table(rows), ""]
 
     ablations = [results[("test", s)] for s in ABLATIONS if ("test", s) in results]
     if ablations:
+        shown += ablations
         out += ["**Ablations, test split**", "", *_table(ablations), ""]
 
     sliced = [results[("test", s)] for s in MAIN_SYSTEMS if ("test", s) in results]
@@ -139,28 +175,43 @@ def render(results: dict[tuple[str, str], dict]) -> str:
         out += ["**Recall@10 by number of gold passages, test split**", ""]
         out += [*_slice_table(sliced), ""]
 
-    if results:
-        everything = list(results.values())
-        sample = max(everything, key=lambda r: r["created_utc"])
-        env = sample["environment"]
+    if shown:
         timed = [results[("test", s)] for s in MAIN_SYSTEMS + ABLATIONS if ("test", s) in results]
         out += [
-            f"Measured on {env['cpu']} ({env['logical_cpus']} logical CPUs, CPU only), "
-            f"Python {env['python']}, {sample['created_utc'][:10]} UTC. "
-            "Latency is one query at a time inside the retriever (query encoding, search "
-            "and fusion), after 3 warmup queries. " + _index_note(timed),
+            _measured_on(shown) + "Latency is one query at a time inside the retriever (query "
+            "encoding, search and fusion), after 3 warmup queries. " + _index_note(timed),
             "",
             "Generated by `uv run regrag report` from `results/`. Do not edit by hand.",
         ]
     return "\n".join(out).rstrip() + "\n"
 
 
+def _marker_offsets(text: str, marker: str) -> list[int]:
+    """Offsets of lines that hold only `marker`. Mentions inside prose are ignored."""
+    pattern = rf"^{re.escape(marker)}[ \t]*$"
+    return [m.start() for m in re.finditer(pattern, text, re.MULTILINE)]
+
+
+def find_block(readme: Path, text: str) -> tuple[int, int]:
+    """Offsets of the start and end marker lines, each of which must appear exactly once."""
+    starts, ends = _marker_offsets(text, START), _marker_offsets(text, END)
+    if len(starts) != 1 or len(ends) != 1 or ends[0] < starts[0]:
+        raise ReadmeMarkersError(
+            f"{readme} needs the results markers: exactly one {START} line, "
+            f"then exactly one {END} line"
+        )
+    return starts[0], ends[0]
+
+
+def check_readme(readme: Path) -> None:
+    """Fail early, before any slow work, if `update_readme` would fail on this file."""
+    find_block(readme, readme.read_text(encoding="utf-8"))
+
+
 def update_readme(readme: Path, block: str) -> bool:
     """Replace the text between the results markers. Returns True if the file changed."""
     text = readme.read_text(encoding="utf-8")
-    start, end = text.find(START), text.find(END)
-    if start == -1 or end == -1 or end < start:
-        raise ValueError(f"{readme} needs {START} and {END} markers")
+    start, end = find_block(readme, text)
     updated = text[: start + len(START)] + "\n" + block + text[end:]
     if updated == text:
         return False
